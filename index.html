@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우주 사이트</title>
+    <style>
+        /* 우주 배경 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            background: url('galaxy.jpg') no-repeat center center fixed;             background-size: cover; /* 배경 크기 조정 */
+            background-size: cover; /* 배경 이미지 크기를 화면에 맞게 자동 조정 */
+            overflow: hidden; /* 스크롤바 없애기 */
+        }
+
+        /* 캔버스를 화면 맨 위에 깔기 */
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 별을 그릴 캔버스 -->
+    <canvas id="space"></canvas>
+
+<script>
+    // 1. 캔버스 설정
+    const canvas = document.getElementById('space');
+    const ctx = canvas.getContext('2d');
+
+    let width = canvas.width = window.innerWidth;   // 캔버스 너비 = 창 너비
+    let height = canvas.height = window.innerHeight; // 캔버스 높이 = 창 높이
+
+    // 2. 별 데이터를 저장할 배열
+    const stars = [];
+
+    // 3. 마우스 좌표 저장할 객체
+    const mouse = {
+        x: null,
+        y: null
+    };
+
+    // 4. 별 400개 만들기
+    for (let i = 0; i < 400; i++) {
+        stars.push({
+            x: Math.random() * width,          // 랜덤한 x좌표
+            y: Math.random() * height,         // 랜덤한 y좌표
+            radius: Math.random() * 2 + 0.6,     // 별 반지름 ( 2 ~ 0.6 사이)
+            speedX: (Math.random() - 0.5) * 0.1, // x축 속도 (천천히 움직이게)
+            speedY: (Math.random() - 0.5) * 0.1,  // y축 속도
+            isAlien: false // 외계인 여부를 나타내는 속성
+        });
+    }
+
+    // 5. 마우스가 움직일 때마다 현재 위치 저장
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;  // 마우스 X 좌표
+        mouse.y = e.clientY;  // 마우스 Y 좌표
+    });
+
+    // 6. 외계인 이스터에그 (클릭 시 별이 외계인 이모티콘으로 변함)
+    canvas.addEventListener('click', (e) => {
+        // 클릭된 위치에 있는 별 찾기
+        for (let star of stars) {
+            let dx = star.x - e.clientX;
+            let dy = star.y - e.clientY;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < star.radius) {
+                star.isAlien = true; // 클릭된 별을 외계인으로 변환
+            }
+        }
+    });
+
+    // 7. 별을 그리고 움직이는 함수
+    function animate() {
+        ctx.clearRect(0, 0, width, height); // 매 프레임마다 캔버스를 깨끗이 지우기
+
+        for (let star of stars) {
+            // 별 위치를 속도만큼 이동시키기
+            star.x += star.speedX;
+            star.y += star.speedY;
+
+            // 별이 화면을 벗어나면 반대편에서 다시 나오게 하기
+            if (star.x < 0) star.x = width;
+            if (star.x > width) star.x = 0;
+            if (star.y < 0) star.y = height;
+            if (star.y > height) star.y = 0;
+
+            // 별 그리기 시작
+            ctx.beginPath();
+            if (star.isAlien) {
+                // 클릭된 별을 외계인 이모티콘(👽)으로 표시
+                ctx.font = '30px Arial';
+                ctx.fillText('👽', star.x - 15, star.y + 10); // 외계인 이모티콘 그리기
+            } else {
+                ctx.fillStyle = 'white'; // 기본은 하얀색 별
+                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+                ctx.fill(); // 별 색칠
+            }
+
+            // 마우스와 별 사이 거리 계산
+            let dx = star.x - mouse.x;
+            let dy = star.y - mouse.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+
+            // 만약 거리가 100픽셀 이하라면 반짝이게!
+            if (distance < 100) {
+                ctx.fillStyle = 'yellow'; // 가까우면 노란색
+            } else {
+                ctx.fillStyle = 'white';  // 아니면 하얀색
+            }
+        }
+
+        requestAnimationFrame(animate); // 다음 프레임 그리기 예약
+    }
+
+    // 8. 애니메이션 시작
+    animate();
+
+    // 9. 창 크기가 바뀌면 캔버스 크기도 조정하기
+    window.addEventListener('resize', () => {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    });
+
+</script>
+
+</body>
+</html>
