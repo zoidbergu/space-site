@@ -1,134 +1,217 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>우주 사이트</title>
-    <style>
-        /* 우주 배경 */
-        body, html {
-            margin: 0;
-            padding: 0;
-            background: url('galaxy.jpg') no-repeat center center fixed;             background-size: cover; /* 배경 크기 조정 */
-            background-size: cover; /* 배경 이미지 크기를 화면에 맞게 자동 조정 */
-            overflow: hidden; /* 스크롤바 없애기 */
-        }
-
-        /* 캔버스를 화면 맨 위에 깔기 */
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>우주 사이트</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: url('galaxy.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: block;
+    }
+    #planet-info {
+      position: absolute;
+      top: 50px;
+      right: 30px;
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      display: none;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- 별을 그릴 캔버스 -->
-    <canvas id="space"></canvas>
+<canvas id="space"></canvas>
+<div id="planet-info">
+  <h3 id="planet-name">행성 이름</h3>
+  <p id="planet-description">행성 설명</p>
+</div>
 
 <script>
-    // 1. 캔버스 설정
     const canvas = document.getElementById('space');
     const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+  
+    let zoom = 1;
+    let originX = 0;
+    let originY = 0;
+    let mouseX = 0;
+    let mouseY = 0;
+  
+    const planetData = {
+  mercury: {
+    name: "수성",
+    description: "태양에서 가장 가까운 행성으로, 낮에는 매우 뜨겁고 밤에는 매우 춥습니다. 대기가 거의 없어 충돌 흔적이 많고, 표면은 달과 비슷합니다. 88일에 한 번 태양을 공전합니다. 크기는 태양계에서 가장 작습니다. 대기 부족으로 생명체 존재는 불가능합니다.",
+    image: "mercury.png"
+  },
+  venus: {
+    name: "금성",
+    description: "지구와 크기가 비슷하지만, 두꺼운 이산화탄소 대기로 온실 효과가 매우 강합니다. 표면 온도는 460도 이상으로, 태양계에서 가장 뜨거운 행성입니다. 자전 방향이 반대이며 자전 속도가 매우 느립니다. 대기압은 지구의 90배에 달합니다. 활발한 화산 활동이 있었던 흔적이 있습니다.",
+    image: "venus.png"
+  },
+  earth: {
+    name: "지구",
+    description: "물과 산소가 풍부하고, 생명체가 존재하는 유일한 행성입니다. 적당한 온도와 안정된 대기를 가지고 있습니다. 하나의 위성(달)을 가지고 있습니다. 지각판 운동이 활발해 지진과 화산이 발생합니다. 자전과 공전이 규칙적이며, 하루는 약 24시간입니다.",
+    image: "earth.png"
+  },
+  mars: {
+    name: "화성",
+    description: "붉은 색을 띠는 행성으로, 철 성분 때문입니다. 과거에는 물이 흐른 흔적이 있으며, 탐사선이 탐험 중입니다. 낮과 밤의 온도 차가 큽니다. 두 개의 작은 위성(포보스, 데이모스)을 가지고 있습니다. 인류가 이주를 꿈꾸는 유력한 후보입니다.",
+    image: "mars.png"
+  },
+  jupiter: {
+    name: "목성",
+    description: "태양계에서 가장 큰 행성으로, 대부분 수소와 헬륨으로 이루어진 가스 행성입니다. 대기에는 커다란 대적반(폭풍)이 있습니다. 약 90개 이상의 위성을 보유하고 있습니다. 자전 속도가 빨라 적도 부분이 부풀어 있습니다. 강한 자기장을 가지고 있습니다.",
+    image: "jupiter.png"
+  },
+  saturn: {
+    name: "토성",
+    description: "아름다운 고리로 유명한 가스 행성입니다. 고리는 얼음과 암석 조각들로 이루어져 있습니다. 크기는 목성 다음이며, 밀도는 물보다 작습니다. 80개 이상의 위성을 가지고 있으며, 그 중 타이탄은 대기를 가진 위성입니다. 빠른 자전과 낮은 밀도로 납작한 형태입니다.",
+    image: "saturn.png"
+  },
+  uranus: {
+    name: "천왕성",
+    description: "자전축이 거의 눕다시피 기울어져 있어 독특한 계절 변화를 가집니다. 희미한 고리와 푸른 색의 대기를 가지고 있으며, 메탄 가스가 색을 결정합니다. 가스와 얼음으로 구성된 '얼음 거인'입니다. 약 27개의 위성을 보유하고 있습니다. 태양계에서 7번째 행성입니다.",
+    image: "uranus.png"
+  },
+  neptune: {
+    name: "해왕성",
+    description: "태양에서 가장 멀리 있는 행성으로, 매우 춥고 바람이 빠르게 불어옵니다. 대기 중 메탄 때문에 푸른 색을 띱니다. 약 14개의 위성을 가지고 있으며, 가장 큰 위성은 트리톤입니다. 가시적인 대폭풍(검은 점)이 관측되기도 했습니다. 내부 에너지가 강해 대류 활동이 활발합니다.",
+    image: "neptune.png"
+  }
+};
 
-    let width = canvas.width = window.innerWidth;   // 캔버스 너비 = 창 너비
-    let height = canvas.height = window.innerHeight; // 캔버스 높이 = 창 높이
-
-    // 2. 별 데이터를 저장할 배열
+  
+    const planetKeys = Object.keys(planetData);
+    const planetImages = {};
+  
+    // 이미지 로드 및 저장
+    planetKeys.forEach(key => {
+      const img = new Image();
+      img.src = planetData[key].image;
+      planetImages[key] = img;
+    });
+  
     const stars = [];
-
-    // 3. 마우스 좌표 저장할 객체
-    const mouse = {
-        x: null,
-        y: null
-    };
-
-    // 4. 별 400개 만들기
+    let planetIndex = 0;
+  
     for (let i = 0; i < 400; i++) {
-        stars.push({
-            x: Math.random() * width,          // 랜덤한 x좌표
-            y: Math.random() * height,         // 랜덤한 y좌표
-            radius: Math.random() * 2 + 0.6,     // 별 반지름 ( 2 ~ 0.6 사이)
-            speedX: (Math.random() - 0.5) * 0.1, // x축 속도 (천천히 움직이게)
-            speedY: (Math.random() - 0.5) * 0.1,  // y축 속도
-            isAlien: false // 외계인 여부를 나타내는 속성
-        });
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 2 + 0.6,
+        speedX: (Math.random() - 0.5) * 0.2,
+        speedY: (Math.random() - 0.5) * 0.2,
+        isPlanet: false,
+        isStopped: false,
+        planetType: null
+      });
     }
-
-    // 5. 마우스가 움직일 때마다 현재 위치 저장
-    window.addEventListener('mousemove', (e) => {
-        mouse.x = e.clientX;  // 마우스 X 좌표
-        mouse.y = e.clientY;  // 마우스 Y 좌표
+  
+    canvas.addEventListener('mousemove', e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     });
-
-    // 6. 외계인 이스터에그 (클릭 시 별이 외계인 이모티콘으로 변함)
+  
+    canvas.addEventListener('wheel', e => {
+      e.preventDefault();
+  
+      const scaleAmount = 0.1;
+      const delta = e.deltaY < 0 ? scaleAmount : -scaleAmount;
+      const newZoom = Math.min(Math.max(zoom + delta, 1), 5);
+  
+      const wx = (mouseX - originX) / zoom;
+      const wy = (mouseY - originY) / zoom;
+  
+      originX = mouseX - wx * newZoom;
+      originY = mouseY - wy * newZoom;
+  
+      zoom = newZoom;
+    }, { passive: false });
+  
     canvas.addEventListener('click', (e) => {
-        // 클릭된 위치에 있는 별 찾기
-        for (let star of stars) {
-            let dx = star.x - e.clientX;
-            let dy = star.y - e.clientY;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-
-            if (distance < star.radius) {
-                star.isAlien = true; // 클릭된 별을 외계인으로 변환
-            }
+      const clickX = (e.clientX - originX) / zoom;
+      const clickY = (e.clientY - originY) / zoom;
+  
+      for (let star of stars) {
+        const dx = star.x - clickX;
+        const dy = star.y - clickY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+  
+        if (distance < 15) {
+          if (!star.isPlanet) {
+            // 8개까지는 순차적으로 배정, 이후 랜덤
+            const planetType = planetIndex < planetKeys.length
+              ? planetKeys[planetIndex++]
+              : planetKeys[Math.floor(Math.random() * planetKeys.length)];
+  
+            star.isPlanet = true;
+            star.isStopped = true;
+            star.planetType = planetType;
+          } else if (star.planetType && zoom >= 3) {
+            const info = planetData[star.planetType];
+            document.getElementById('planet-name').textContent = info.name;
+            document.getElementById('planet-description').textContent = info.description;
+            document.getElementById('planet-info').style.display = 'block';
+          }
+          return;
         }
+      }
     });
-
-    // 7. 별을 그리고 움직이는 함수
+  
     function animate() {
-        ctx.clearRect(0, 0, width, height); // 매 프레임마다 캔버스를 깨끗이 지우기
-
-        for (let star of stars) {
-            // 별 위치를 속도만큼 이동시키기
-            star.x += star.speedX;
-            star.y += star.speedY;
-
-            // 별이 화면을 벗어나면 반대편에서 다시 나오게 하기
-            if (star.x < 0) star.x = width;
-            if (star.x > width) star.x = 0;
-            if (star.y < 0) star.y = height;
-            if (star.y > height) star.y = 0;
-
-            // 별 그리기 시작
-            ctx.beginPath();
-            if (star.isAlien) {
-                // 클릭된 별을 외계인 이모티콘(👽)으로 표시
-                ctx.font = '30px Arial';
-                ctx.fillText('👽', star.x - 15, star.y + 10); // 외계인 이모티콘 그리기
-            } else {
-                ctx.fillStyle = 'white'; // 기본은 하얀색 별
-                ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-                ctx.fill(); // 별 색칠
-            }
-
-            // 마우스와 별 사이 거리 계산
-            let dx = star.x - mouse.x;
-            let dy = star.y - mouse.y;
-            let distance = Math.sqrt(dx * dx + dy * dy);
-
-            // 만약 거리가 100픽셀 이하라면 반짝이게!
-            if (distance < 100) {
-                ctx.fillStyle = 'yellow'; // 가까우면 노란색
-            } else {
-                ctx.fillStyle = 'white';  // 아니면 하얀색
-            }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, width, height);
+      ctx.setTransform(zoom, 0, 0, zoom, originX, originY);
+  
+      for (let star of stars) {
+        if (!star.isStopped) {
+          star.x += star.speedX;
+          star.y += star.speedY;
+  
+          if (star.x < 0) star.x = width;
+          if (star.x > width) star.x = 0;
+          if (star.y < 0) star.y = height;
+          if (star.y > height) star.y = 0;
         }
-
-        requestAnimationFrame(animate); // 다음 프레임 그리기 예약
+  
+        // 별 그리기
+        ctx.beginPath();
+        ctx.fillStyle = 'white';
+        ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        ctx.fill();
+  
+        // 행성이면 이미지 그리기
+        if (zoom >= 3 && star.isPlanet && star.planetType) {
+          const img = planetImages[star.planetType];
+          if (img && img.complete) {
+            ctx.drawImage(img, star.x - 15, star.y - 15, 30, 30);
+          }
+        }
+      }
+  
+      requestAnimationFrame(animate);
     }
-
-    // 8. 애니메이션 시작
+  
     animate();
-
-    // 9. 창 크기가 바뀌면 캔버스 크기도 조정하기
+  
     window.addEventListener('resize', () => {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
     });
-
-</script>
+  </script>
+  
 
 </body>
 </html>
